@@ -1,6 +1,5 @@
 pub mod aws_terrain;
 pub mod fixed_tile;
-pub mod jegg500;
 pub mod mapterhorn;
 pub mod planetary;
 pub mod regional;
