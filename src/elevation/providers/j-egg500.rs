@@ -151,7 +151,7 @@ impl crate::elevation::provider::ElevationProvider for Jegg500 {
         grid_height: usize,
     ) -> Result<RawElevationGrid, Box<dyn std::error::Error>> {
         let points = load_jegg500(
-    concat!(env!("CARGO_MANIFEST_DIR"), "/data/mesh500_34_137(2).txt")
+    concat!(env!("CARGO_MANIFEST_DIR"), "data/J-EGG500.date.34_137")
 )?;
 
         Ok(points_to_grid(
