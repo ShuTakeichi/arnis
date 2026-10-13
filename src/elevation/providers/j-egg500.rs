@@ -9,27 +9,66 @@ struct JeggPoint {
     depth_m: f64,
 }
 
-fn load_jegg500(path: &str) -> Result<Vec<JeggPoint>, Box<dyn std::error::Error>> {
-    let text = fs::read_to_string(path)?;
 
+fn load_jegg500(path: &str) -> Result<Vec<JeggPoint>, Box<dyn std::error::Error>> {
+    let text = std::fs::read_to_string(path)?;
     let mut points = Vec::new();
 
-    for line in text.lines() {
+    for (index, line) in text.lines().enumerate() {
+        let line_number = index + 1;
         let values: Vec<&str> = line.split_whitespace().collect();
 
+        // 4列でない行は読み飛ばす
         if values.len() != 4 {
             continue;
         }
 
-        let lat: f64 = values[1].parse()?;
-        let lon: f64 = values[2].parse()?;
-        let depth: f64 = values[3].parse()?;
+        // 緯度
+        let lat: f64 = values[1].parse().map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Line {}: invalid latitude: {}", line_number, e),
+            )
+        })?;
+
+        // 経度
+        let lon: f64 = values[2].parse().map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Line {}: invalid longitude: {}", line_number, e),
+            )
+        })?;
+
+        // 水深
+        let depth: f64 = values[3].parse().map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Line {}: invalid depth: {}", line_number, e),
+            )
+        })?;
+
+        // 不正な数値を拒否する
+        if !lat.is_finite() || !lon.is_finite() || !depth.is_finite() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Line {}: non-finite number", line_number),
+            )
+            .into());
+        }
 
         points.push(JeggPoint {
             lat,
             lon,
             depth_m: -depth,
         });
+    }
+
+    if points.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "No valid J-EGG500 data rows found",
+        )
+        .into());
     }
 
     Ok(points)
